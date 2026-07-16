@@ -1,0 +1,21 @@
+{
+  "connector": "crm",
+  "requestId": "demo-plan",
+  "actions": [
+    {
+      "id": "lookup-contact",
+      "operation": "read",
+      "resource": "contact",
+      "fields": ["email", "name"],
+      "description": "Find the contact record"
+    },
+    {
+      "id": "create-note",
+      "operation": "write",
+      "resource": "contact.note",
+      "fields": ["contactId", "body"],
+      "description": "Draft a follow-up note"
+    }
+  ]
+}
+

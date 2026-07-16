@@ -1,0 +1,24 @@
+{
+  "connector": "crm",
+  "defaultApproval": "ask",
+  "resources": {
+    "contact": {
+      "operations": ["read"],
+      "sensitiveFields": ["email"],
+      "approval": "ask"
+    },
+    "contact.note": {
+      "operations": ["write"],
+      "sensitiveFields": [],
+      "approval": "explicit"
+    }
+  },
+  "blocked": [
+    {
+      "operation": "delete",
+      "resource": "*",
+      "reason": "Destructive actions are outside the fixture scope."
+    }
+  ]
+}
+
