@@ -1,0 +1,34 @@
+{
+  "name": "connector-plan-sandbox",
+  "version": "0.1.0",
+  "description": "Dry-run receipts for connector action plans using local policy fixtures.",
+  "type": "module",
+  "bin": {
+    "connector-plan-sandbox": "./src/cli.js"
+  },
+  "exports": {
+    ".": "./src/index.js"
+  },
+  "files": [
+    "src",
+    "docs",
+    "fixtures",
+    "SKILL.md",
+    "README.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check src/index.js && node --check src/cli.js && node --check test/sandbox.test.js",
+    "build": "node scripts/build-check.js",
+    "smoke": "node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format markdown --out /tmp/connector-plan-sandbox-smoke.md"
+  },
+  "keywords": [
+    "agents",
+    "connectors",
+    "dry-run",
+    "approval",
+    "cli"
+  ],
+  "license": "MIT"
+}
+
