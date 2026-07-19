@@ -18,7 +18,7 @@
   ],
   "scripts": {
     "test": "node --test",
-    "check": "node --check src/index.js && node --check src/cli.js && node --check test/sandbox.test.js",
+    "check": "node --check src/*.js test/*.test.js",
     "build": "node scripts/build-check.js",
     "smoke": "node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format markdown --out /tmp/connector-plan-sandbox-smoke.md"
   },
@@ -31,4 +31,3 @@
   ],
   "license": "MIT"
 }
-

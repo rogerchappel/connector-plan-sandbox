@@ -41,8 +41,10 @@ connector-plan-sandbox plan.json --policy policy.json --format markdown --out re
 connector-plan-sandbox plan.json --policy policy.json --format json
 ```
 
+Invalid or incomplete options exit with status 1 and a concise error message,
+without printing an implementation stack trace.
+
 ## Safety
 
 The tool reads local files and writes only an explicit `--out` report. It does
 not hold tokens, open OAuth flows, call connector APIs, or make external writes.
-
