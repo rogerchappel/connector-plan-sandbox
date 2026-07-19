@@ -10,9 +10,9 @@ if (args.includes("--help") || args.length === 0) {
 }
 
 const planPath = args[0];
-const options = parseOptions(args.slice(1));
 
 try {
+  const options = parseOptions(args.slice(1));
   const plan = await loadJson(planPath);
   const policy = await loadJson(options.policy);
   const receipt = evaluatePlan(plan, policy);
@@ -42,4 +42,3 @@ function readValue(tokens, index, flag) {
   if (!tokens[index]) throw new Error(`${flag} requires a value.`);
   return tokens[index];
 }
-
