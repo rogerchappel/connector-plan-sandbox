@@ -29,6 +29,40 @@ test("blocks unknown resources and disallowed operations", async () => {
   assert.match(receipt.summary, /blocker/);
 });
 
+test("rejects unsupported approval modes before issuing a receipt", () => {
+  const plan = { actions: [{ operation: "write", resource: "contact" }] };
+
+  assert.throws(
+    () => evaluatePlan(plan, {
+      defaultApproval: "typo",
+      resources: { contact: { operations: ["write"], approval: "ask" } }
+    }),
+    /Policy defaultApproval must be one of: none, ask, explicit, blocked/
+  );
+  assert.throws(
+    () => evaluatePlan(plan, {
+      resources: {
+        contact: { operations: ["write"], approval: "ask" },
+        unused: { operations: ["read"], approval: "typo" }
+      }
+    }),
+    /Policy approval for resource unused must be one of: none, ask, explicit, blocked/
+  );
+});
+
+test("accepts every supported approval mode", () => {
+  for (const approval of ["none", "ask", "explicit", "blocked"]) {
+    const receipt = evaluatePlan(
+      { actions: [{ operation: "write", resource: "contact" }] },
+      { resources: { contact: { operations: ["write"], approval } } }
+    );
+
+    assert.equal(receipt.actions[0].approval, approval);
+    assert.equal(receipt.approval, approval);
+    assert.equal(receipt.blocked, false);
+  }
+});
+
 test("renders markdown receipt", async () => {
   const receipt = evaluatePlan(await loadJson("fixtures/action-plan.json"), await loadJson("fixtures/policy.json"));
   const markdown = renderMarkdown(receipt);
@@ -37,4 +71,3 @@ test("renders markdown receipt", async () => {
   assert.match(markdown, /lookup-contact/);
   assert.match(markdown, /Sensitive fields: email/);
 });
-
