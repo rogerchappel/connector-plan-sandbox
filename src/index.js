@@ -14,6 +14,7 @@ export async function loadJson(path) {
 export function evaluatePlan(plan, policy) {
   if (!Array.isArray(plan.actions)) throw new Error("Plan must include an actions array.");
   if (!policy || typeof policy !== "object") throw new Error("Policy must be an object.");
+  validatePolicyApprovals(policy);
 
   const actions = plan.actions.map((action, index) => evaluateAction(action, index, policy));
   const blockers = actions.flatMap((action) => action.blockers.map((blocker) => ({ actionId: action.id, ...blocker })));
@@ -31,6 +32,24 @@ export function evaluatePlan(plan, policy) {
     blockers,
     summary: buildSummary(actions, blockers, approval)
   };
+}
+
+function validatePolicyApprovals(policy) {
+  if (policy.defaultApproval !== undefined) {
+    validateApproval(policy.defaultApproval, "Policy defaultApproval");
+  }
+
+  for (const [resource, resourcePolicy] of Object.entries(policy.resources || {})) {
+    if (resourcePolicy?.approval !== undefined) {
+      validateApproval(resourcePolicy.approval, `Policy approval for resource ${resource}`);
+    }
+  }
+}
+
+function validateApproval(approval, label) {
+  if (!APPROVAL_ORDER.includes(approval)) {
+    throw new Error(`${label} must be one of: ${APPROVAL_ORDER.join(", ")}.`);
+  }
 }
 
 export function renderMarkdown(receipt) {
@@ -115,4 +134,3 @@ function buildSummary(actions, blockers, approval) {
   const reads = actions.filter((action) => action.operation === "read").length;
   return `${reads} read action(s), ${writes} write action(s), approval mode ${approval}.`;
 }
-
