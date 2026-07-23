@@ -32,7 +32,14 @@ node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format
 ## Policy Shape
 
 Policies define allowed resources, sensitive fields, approval modes, and blocked
-operations. The sandbox never executes the action plan.
+operations. Approval modes `none`, `ask`, and `explicit` describe the approval
+needed before execution. The `blocked` mode is a deny policy: whether set on a
+resource or inherited from `defaultApproval`, it adds a blocker to each affected
+action and makes the top-level receipt report `"blocked": true`.
+
+A plan containing both permitted and policy-blocked actions is blocked as a
+whole. Review the receipt's per-action blockers; do not execute any part of the
+plan until they are resolved. The sandbox itself never executes the action plan.
 
 ## CLI
 

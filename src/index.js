@@ -93,6 +93,7 @@ function evaluateAction(action, index, policy) {
   const resource = action.resource || "unknown";
   const resourcePolicy = policy.resources?.[resource] || null;
   const blockers = blockedByPolicy(operation, resource, policy);
+  const configuredApproval = resourcePolicy?.approval ?? policy.defaultApproval ?? "ask";
 
   if (!resourcePolicy) {
     blockers.push({ reason: `Resource is not present in policy fixture: ${resource}` });
@@ -100,9 +101,16 @@ function evaluateAction(action, index, policy) {
     blockers.push({ reason: `Operation ${operation} is not allowed for ${resource}` });
   }
 
+  if (configuredApproval === "blocked") {
+    const reason = resourcePolicy?.approval === "blocked"
+      ? `Approval policy blocks all actions for ${resource}.`
+      : `The default approval policy blocks all actions for ${resource}.`;
+    blockers.push({ reason });
+  }
+
   const fields = Array.isArray(action.fields) ? action.fields : [];
   const sensitiveFields = fields.filter((field) => resourcePolicy?.sensitiveFields?.includes(field));
-  const approval = blockers.length ? "blocked" : resourcePolicy?.approval || policy.defaultApproval || "ask";
+  const approval = blockers.length ? "blocked" : configuredApproval;
 
   return {
     id,

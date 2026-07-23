@@ -50,8 +50,8 @@ test("rejects unsupported approval modes before issuing a receipt", () => {
   );
 });
 
-test("accepts every supported approval mode", () => {
-  for (const approval of ["none", "ask", "explicit", "blocked"]) {
+test("accepts every supported non-blocking approval mode", () => {
+  for (const approval of ["none", "ask", "explicit"]) {
     const receipt = evaluatePlan(
       { actions: [{ operation: "write", resource: "contact" }] },
       { resources: { contact: { operations: ["write"], approval } } }
@@ -61,6 +61,61 @@ test("accepts every supported approval mode", () => {
     assert.equal(receipt.approval, approval);
     assert.equal(receipt.blocked, false);
   }
+});
+
+test("blocks actions when a resource approval policy is blocked", () => {
+  const receipt = evaluatePlan({
+    actions: [{ id: "write-contact", operation: "write", resource: "contact" }]
+  }, {
+    resources: {
+      contact: { operations: ["write"], approval: "blocked" }
+    },
+    defaultApproval: "ask"
+  });
+
+  assert.equal(receipt.approval, "blocked");
+  assert.equal(receipt.blocked, true);
+  assert.deepEqual(receipt.blockers, [{
+    actionId: "write-contact",
+    reason: "Approval policy blocks all actions for contact."
+  }]);
+  assert.match(receipt.summary, /1 blocker/);
+});
+
+test("blocks actions when the default approval policy is blocked", () => {
+  const receipt = evaluatePlan({
+    actions: [{ id: "read-contact", operation: "read", resource: "contact" }]
+  }, {
+    resources: {
+      contact: { operations: ["read"] }
+    },
+    defaultApproval: "blocked"
+  });
+
+  assert.equal(receipt.approval, "blocked");
+  assert.equal(receipt.blocked, true);
+  assert.match(receipt.blockers[0].reason, /default approval policy/);
+});
+
+test("aggregates policy-blocked and permitted actions coherently", () => {
+  const receipt = evaluatePlan({
+    actions: [
+      { id: "read-contact", operation: "read", resource: "contact" },
+      { id: "write-note", operation: "write", resource: "note" }
+    ]
+  }, {
+    resources: {
+      contact: { operations: ["read"], approval: "none" },
+      note: { operations: ["write"], approval: "blocked" }
+    }
+  });
+
+  assert.equal(receipt.actions[0].approval, "none");
+  assert.equal(receipt.actions[0].blockers.length, 0);
+  assert.equal(receipt.actions[1].approval, "blocked");
+  assert.equal(receipt.blocked, true);
+  assert.equal(receipt.blockers.length, 1);
+  assert.match(renderMarkdown(receipt), /Blocked: yes[\s\S]*Blocker: Approval policy blocks all actions for note/);
 });
 
 test("renders markdown receipt", async () => {
