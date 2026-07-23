@@ -28,8 +28,13 @@ read or write.
 No approval is required for local fixture rehearsal. Approval is required before
 any live connector read or write described by the receipt.
 
+Treat an approval mode of `blocked` as a deny policy, not as an approval request.
+It produces an action blocker and a top-level `blocked: true` receipt whether it
+comes from a resource policy or `defaultApproval`. If any action is blocked,
+stop the entire plan and resolve every receipt blocker before using real
+connector tools; do not execute the otherwise permitted actions separately.
+
 ## Verification
 
 Run `npm test`, `npm run check`, `npm run build`, `npm run smoke`, and
 `bash scripts/validate.sh`.
-
