@@ -29,6 +29,9 @@ node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format
 }
 ```
 
+`actions` must be an array. Each action's optional `fields` value must also be
+an array; omit it when the action has no fields.
+
 ## Policy Shape
 
 Policies define allowed resources, sensitive fields, approval modes, and blocked
@@ -36,6 +39,11 @@ operations. Approval modes `none`, `ask`, and `explicit` describe the approval
 needed before execution. The `blocked` mode is a deny policy: whether set on a
 resource or inherited from `defaultApproval`, it adds a blocker to each affected
 action and makes the top-level receipt report `"blocked": true`.
+
+Each resource must declare `operations` as an array of exact operation names.
+The optional top-level `blocked` collection must be an array of rule objects.
+Other values, including strings that merely contain an operation name, are
+rejected before a receipt is evaluated.
 
 A plan containing both permitted and policy-blocked actions is blocked as a
 whole. Review the receipt's per-action blockers; do not execute any part of the
