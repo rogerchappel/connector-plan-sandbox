@@ -14,6 +14,8 @@ export async function loadJson(path) {
 export function evaluatePlan(plan, policy) {
   if (!Array.isArray(plan.actions)) throw new Error("Plan must include an actions array.");
   if (!policy || typeof policy !== "object") throw new Error("Policy must be an object.");
+  validatePlanCollections(plan);
+  validatePolicyCollections(policy);
   validatePolicyApprovals(policy);
 
   const actions = plan.actions.map((action, index) => evaluateAction(action, index, policy));
@@ -32,6 +34,26 @@ export function evaluatePlan(plan, policy) {
     blockers,
     summary: buildSummary(actions, blockers, approval)
   };
+}
+
+function validatePlanCollections(plan) {
+  plan.actions.forEach((action, index) => {
+    if (action?.fields !== undefined && !Array.isArray(action.fields)) {
+      throw new Error(`Action ${index} fields must be an array.`);
+    }
+  });
+}
+
+function validatePolicyCollections(policy) {
+  if (policy.blocked !== undefined && !Array.isArray(policy.blocked)) {
+    throw new Error("Policy blocked must be an array.");
+  }
+
+  for (const [resource, resourcePolicy] of Object.entries(policy.resources || {})) {
+    if (!Array.isArray(resourcePolicy?.operations)) {
+      throw new Error(`Policy operations for resource ${resource} must be an array.`);
+    }
+  }
 }
 
 function validatePolicyApprovals(policy) {

@@ -63,6 +63,40 @@ test("accepts every supported non-blocking approval mode", () => {
   }
 });
 
+test("rejects malformed action fields instead of discarding them", () => {
+  assert.throws(
+    () => evaluatePlan({
+      actions: [{ id: "read-contact", operation: "read", resource: "contact", fields: "email" }]
+    }, {
+      resources: { contact: { operations: ["read"], sensitiveFields: ["email"] } }
+    }),
+    /Action 0 fields must be an array/
+  );
+});
+
+test("rejects string policy operations instead of using substring matches", () => {
+  assert.throws(
+    () => evaluatePlan({
+      actions: [{ operation: "read", resource: "contact" }]
+    }, {
+      resources: { contact: { operations: "bread" } }
+    }),
+    /Policy operations for resource contact must be an array/
+  );
+});
+
+test("rejects malformed blocked rules with a domain error", () => {
+  assert.throws(
+    () => evaluatePlan({
+      actions: [{ operation: "read", resource: "contact" }]
+    }, {
+      resources: { contact: { operations: ["read"] } },
+      blocked: {}
+    }),
+    /Policy blocked must be an array/
+  );
+});
+
 test("blocks actions when a resource approval policy is blocked", () => {
   const receipt = evaluatePlan({
     actions: [{ id: "write-contact", operation: "write", resource: "contact" }]
