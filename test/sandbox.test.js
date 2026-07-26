@@ -74,6 +74,28 @@ test("rejects malformed action fields instead of discarding them", () => {
   );
 });
 
+test("rejects mismatched plan and policy connectors", () => {
+  assert.throws(
+    () => evaluatePlan({
+      connector: "crm",
+      actions: [{ operation: "read", resource: "contact" }]
+    }, {
+      connector: "mail",
+      resources: { contact: { operations: ["read"] } }
+    }),
+    /Plan connector crm does not match policy connector mail/
+  );
+});
+
+test("rejects malformed policy resources", () => {
+  for (const resources of [null, [], "contact"]) {
+    assert.throws(
+      () => evaluatePlan({ actions: [] }, { resources }),
+      /Policy resources must be an object/
+    );
+  }
+});
+
 test("rejects string policy operations instead of using substring matches", () => {
   assert.throws(
     () => evaluatePlan({
@@ -82,6 +104,23 @@ test("rejects string policy operations instead of using substring matches", () =
       resources: { contact: { operations: "bread" } }
     }),
     /Policy operations for resource contact must be an array/
+  );
+});
+
+test("rejects malformed sensitive field collections and entries", () => {
+  const plan = { actions: [{ operation: "read", resource: "contact", fields: ["email"] }] };
+
+  assert.throws(
+    () => evaluatePlan(plan, {
+      resources: { contact: { operations: ["read"], sensitiveFields: "name,email-address" } }
+    }),
+    /Policy sensitiveFields for resource contact must be an array/
+  );
+  assert.throws(
+    () => evaluatePlan(plan, {
+      resources: { contact: { operations: ["read"], sensitiveFields: ["email", 42] } }
+    }),
+    /Policy sensitiveFields for resource contact must contain only strings/
   );
 });
 
@@ -95,6 +134,21 @@ test("rejects malformed blocked rules with a domain error", () => {
     }),
     /Policy blocked must be an array/
   );
+
+  assert.throws(
+    () => evaluatePlan({ actions: [] }, { resources: {}, blocked: ["not-a-rule"] }),
+    /Policy blocked rule 0 must be an object/
+  );
+
+  for (const [blocked, message] of [
+    [[{ operation: "", resource: "contact" }], /Policy blocked rule 0 operation must be a non-empty string/],
+    [[{ operation: "read", resource: 42 }], /Policy blocked rule 0 resource must be a non-empty string/]
+  ]) {
+    assert.throws(
+      () => evaluatePlan({ actions: [] }, { resources: {}, blocked }),
+      message
+    );
+  }
 });
 
 test("blocks actions when a resource approval policy is blocked", () => {
