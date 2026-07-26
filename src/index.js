@@ -14,6 +14,7 @@ export async function loadJson(path) {
 export function evaluatePlan(plan, policy) {
   if (!Array.isArray(plan.actions)) throw new Error("Plan must include an actions array.");
   if (!policy || typeof policy !== "object") throw new Error("Policy must be an object.");
+  validateConnectorIdentity(plan, policy);
   validatePlanCollections(plan);
   validatePolicyCollections(policy);
   validatePolicyApprovals(policy);
@@ -36,6 +37,12 @@ export function evaluatePlan(plan, policy) {
   };
 }
 
+function validateConnectorIdentity(plan, policy) {
+  if (plan.connector && policy.connector && plan.connector !== policy.connector) {
+    throw new Error(`Plan connector ${plan.connector} does not match policy connector ${policy.connector}.`);
+  }
+}
+
 function validatePlanCollections(plan) {
   plan.actions.forEach((action, index) => {
     if (action?.fields !== undefined && !Array.isArray(action.fields)) {
@@ -45,13 +52,37 @@ function validatePlanCollections(plan) {
 }
 
 function validatePolicyCollections(policy) {
+  if (!policy.resources || typeof policy.resources !== "object" || Array.isArray(policy.resources)) {
+    throw new Error("Policy resources must be an object.");
+  }
+
   if (policy.blocked !== undefined && !Array.isArray(policy.blocked)) {
     throw new Error("Policy blocked must be an array.");
   }
 
-  for (const [resource, resourcePolicy] of Object.entries(policy.resources || {})) {
+  for (const [resource, resourcePolicy] of Object.entries(policy.resources)) {
     if (!Array.isArray(resourcePolicy?.operations)) {
       throw new Error(`Policy operations for resource ${resource} must be an array.`);
+    }
+    if (!resourcePolicy.operations.every((operation) => typeof operation === "string")) {
+      throw new Error(`Policy operations for resource ${resource} must contain only strings.`);
+    }
+    if (resourcePolicy.sensitiveFields !== undefined && !Array.isArray(resourcePolicy.sensitiveFields)) {
+      throw new Error(`Policy sensitiveFields for resource ${resource} must be an array.`);
+    }
+    if (resourcePolicy.sensitiveFields?.some((field) => typeof field !== "string")) {
+      throw new Error(`Policy sensitiveFields for resource ${resource} must contain only strings.`);
+    }
+  }
+
+  for (const [index, rule] of (policy.blocked || []).entries()) {
+    if (!rule || typeof rule !== "object" || Array.isArray(rule)) {
+      throw new Error(`Policy blocked rule ${index} must be an object.`);
+    }
+    for (const field of ["operation", "resource"]) {
+      if (typeof rule[field] !== "string" || rule[field].length === 0) {
+        throw new Error(`Policy blocked rule ${index} ${field} must be a non-empty string.`);
+      }
     }
   }
 }
