@@ -30,7 +30,9 @@ node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format
 ```
 
 `actions` must be an array. Each action's optional `fields` value must also be
-an array; omit it when the action has no fields.
+an array; omit it when the action has no fields. When both the plan and policy
+declare a non-empty `connector`, the values must match so that a policy cannot
+authorize a plan intended for another connector.
 
 ## Policy Shape
 
@@ -40,10 +42,16 @@ needed before execution. The `blocked` mode is a deny policy: whether set on a
 resource or inherited from `defaultApproval`, it adds a blocker to each affected
 action and makes the top-level receipt report `"blocked": true`.
 
-Each resource must declare `operations` as an array of exact operation names.
+`resources` is required and must be an object keyed by resource name. Each
+resource must declare `operations` as an array of exact string operation names.
+Its optional `sensitiveFields` value must be an array of exact field-name
+strings; substring matching is never used.
+
 The optional top-level `blocked` collection must be an array of rule objects.
-Other values, including strings that merely contain an operation name, are
-rejected before a receipt is evaluated.
+Every rule requires non-empty string `operation` and `resource` fields; either
+field may be `"*"` to match all values. Other shapes, including strings that
+merely contain an operation or field name, are rejected before a receipt is
+evaluated.
 
 A plan containing both permitted and policy-blocked actions is blocked as a
 whole. Review the receipt's per-action blockers; do not execute any part of the
