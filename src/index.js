@@ -18,6 +18,7 @@ export function evaluatePlan(plan, policy) {
   validatePlanCollections(plan);
   validatePolicyCollections(policy);
   validatePolicyApprovals(policy);
+  validatePlanActions(plan);
 
   const actions = plan.actions.map((action, index) => evaluateAction(action, index, policy));
   const blockers = actions.flatMap((action) => action.blockers.map((blocker) => ({ actionId: action.id, ...blocker })));
@@ -35,6 +36,12 @@ export function evaluatePlan(plan, policy) {
     blockers,
     summary: buildSummary(actions, blockers, approval)
   };
+}
+
+function validatePlanActions(plan) {
+  if (plan.actions.length === 0) {
+    throw new Error("Plan actions must contain at least one action.");
+  }
 }
 
 function validateConnectorIdentity(plan, policy) {
