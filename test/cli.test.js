@@ -5,6 +5,14 @@ import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+test("help states that action plans cannot be empty", () => {
+  const result = spawnSync(process.execPath, ["src/cli.js", "--help"], { encoding: "utf8" });
+
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /actions array must contain at least one action/);
+  assert.equal(result.stderr, "");
+});
+
 test("reports option errors without exposing an internal stack trace", () => {
   const result = spawnSync(process.execPath, [
     "src/cli.js",

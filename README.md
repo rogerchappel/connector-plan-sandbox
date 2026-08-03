@@ -29,10 +29,11 @@ node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format
 }
 ```
 
-`actions` must be an array. Each action's optional `fields` value must also be
-an array; omit it when the action has no fields. When both the plan and policy
-declare a non-empty `connector`, the values must match so that a policy cannot
-authorize a plan intended for another connector.
+`actions` must be an array containing at least one action; an empty plan is
+rejected without producing a receipt. Each action's optional `fields` value
+must also be an array; omit it when the action has no fields. When both the plan
+and policy declare a non-empty `connector`, the values must match so that a
+policy cannot authorize a plan intended for another connector.
 
 ## Policy Shape
 
@@ -65,7 +66,8 @@ connector-plan-sandbox plan.json --policy policy.json --format json
 ```
 
 Invalid or incomplete options exit with status 1 and a concise error message,
-without printing an implementation stack trace.
+without printing an implementation stack trace. Plans with an empty `actions`
+array likewise exit with status 1 and do not write a receipt.
 
 ## Safety
 
