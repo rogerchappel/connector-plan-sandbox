@@ -14,6 +14,16 @@ test("evaluates fixture plan against policy", async () => {
   assert.equal(receipt.blocked, false);
 });
 
+test("rejects plans without any actions", () => {
+  assert.throws(
+    () => evaluatePlan({ connector: "crm", actions: [] }, {
+      connector: "crm",
+      resources: {}
+    }),
+    /Plan actions must contain at least one action/
+  );
+});
+
 test("blocks unknown resources and disallowed operations", async () => {
   const policy = await loadJson("fixtures/policy.json");
   const receipt = evaluatePlan({

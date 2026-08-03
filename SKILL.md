@@ -5,7 +5,8 @@ read or write.
 
 ## Required Inputs
 
-- A local connector action plan JSON file.
+- A local connector action plan JSON file whose `actions` array contains at
+  least one proposed action.
 - A local connector policy fixture JSON file.
 - Optional output path for the receipt.
 
@@ -22,6 +23,9 @@ read or write.
 3. Run `connector-plan-sandbox plan.json --policy policy.json`.
 4. Review approval mode, blocked actions, and sensitive fields.
 5. Ask the user for any required approval before using real connector tools.
+
+Do not use an empty action plan as a successful rehearsal. The CLI rejects it
+without issuing a receipt; add the intended action before continuing.
 
 ## Approval Requirements
 

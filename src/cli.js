@@ -5,7 +5,9 @@ import { evaluatePlan, loadJson, renderJson, renderMarkdown } from "./index.js";
 const args = process.argv.slice(2);
 
 if (args.includes("--help") || args.length === 0) {
-  console.log(`Usage: connector-plan-sandbox <plan.json> --policy policy.json [--format markdown|json] [--out path]`);
+  console.log(`Usage: connector-plan-sandbox <plan.json> --policy policy.json [--format markdown|json] [--out path]
+
+The plan's actions array must contain at least one action.`);
   process.exit(args.length === 0 ? 1 : 0);
 }
 
