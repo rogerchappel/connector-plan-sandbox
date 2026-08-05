@@ -7,6 +7,7 @@ const args = process.argv.slice(2);
 if (args.includes("--help") || args.length === 0) {
   console.log(`Usage: connector-plan-sandbox <plan.json> --policy policy.json [--format markdown|json] [--out path]
 
+Options may appear in any order after <plan.json> and may each be specified once.
 The plan's actions array must contain at least one action.`);
   process.exit(args.length === 0 ? 1 : 0);
 }
