@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -95,4 +95,39 @@ test("reports malformed blocked rules as concise domain errors", () => {
   assert.equal(result.stdout, "");
   assert.equal(result.stderr, "connector-plan-sandbox: Policy blocked rule 0 must be an object.\n");
   assert.doesNotMatch(result.stderr, /\n\s+at /);
+});
+
+test("rejects malformed plan shapes without writing output", () => {
+  const policy = { resources: { contact: { operations: ["read"] } } };
+  for (const [plan, message] of [
+    [null, "Plan must be an object."],
+    [[], "Plan must be an object."],
+    [{ actions: ["read contact"] }, "Action 0 must be an object."],
+    [{ actions: [{ operation: 42, resource: "contact" }] }, "Action 0 operation must be a non-empty string."],
+    [{ actions: [{ operation: "read", resource: "contact", fields: [null] }] }, "Action 0 fields must contain only strings."]
+  ]) {
+    const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
+    const planPath = join(directory, "plan.json");
+    const policyPath = join(directory, "policy.json");
+    const outputPath = join(directory, "receipt.json");
+    writeFileSync(planPath, JSON.stringify(plan));
+    writeFileSync(policyPath, JSON.stringify(policy));
+
+    const result = spawnSync(process.execPath, [
+      "src/cli.js",
+      planPath,
+      "--policy",
+      policyPath,
+      "--format",
+      "json",
+      "--out",
+      outputPath
+    ], { encoding: "utf8" });
+
+    assert.equal(result.status, 1);
+    assert.equal(result.stdout, "");
+    assert.equal(result.stderr, `connector-plan-sandbox: ${message}\n`);
+    assert.doesNotMatch(result.stderr, /\n\s+at /);
+    assert.equal(existsSync(outputPath), false);
+  }
 });
