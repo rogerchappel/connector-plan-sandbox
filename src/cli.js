@@ -28,12 +28,19 @@ try {
 
 function parseOptions(tokens) {
   const options = { format: "markdown", out: null, policy: null };
+  const seen = new Set();
   for (let index = 0; index < tokens.length; index += 1) {
     const token = tokens[index];
-    if (token === "--policy") options.policy = readValue(tokens, ++index, token);
-    else if (token === "--format") options.format = readValue(tokens, ++index, token);
-    else if (token === "--out") options.out = readValue(tokens, ++index, token);
-    else throw new Error(`Unknown option: ${token}`);
+    if (!["--policy", "--format", "--out"].includes(token)) {
+      throw new Error(`Unknown option: ${token}`);
+    }
+    if (seen.has(token)) throw new Error(`${token} may only be specified once.`);
+    seen.add(token);
+
+    const value = readValue(tokens, ++index, token);
+    if (token === "--policy") options.policy = value;
+    else if (token === "--format") options.format = value;
+    else options.out = value;
   }
   if (!options.policy) throw new Error("--policy is required.");
   if (!["markdown", "json"].includes(options.format)) throw new Error("--format must be markdown or json.");
@@ -41,6 +48,8 @@ function parseOptions(tokens) {
 }
 
 function readValue(tokens, index, flag) {
-  if (!tokens[index]) throw new Error(`${flag} requires a value.`);
+  if (!tokens[index] || tokens[index].startsWith("--")) {
+    throw new Error(`${flag} requires a value.`);
+  }
   return tokens[index];
 }
