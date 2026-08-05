@@ -68,6 +68,11 @@ connector-plan-sandbox plan.json --policy policy.json --format markdown --out re
 connector-plan-sandbox plan.json --policy policy.json --format json
 ```
 
+The plan path must be first. After it, `--policy`, `--format`, and `--out` may
+appear in any order, but each option may be specified only once and must be
+followed by a value rather than another option. `--policy` is required;
+`--format` defaults to `markdown`, and `--out` defaults to standard output.
+
 Invalid or incomplete options and malformed plan shapes exit with status 1 and
 a concise domain error, without printing an implementation stack trace. No
 receipt is printed or written when validation fails, including for an empty
