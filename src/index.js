@@ -12,6 +12,9 @@ export async function loadJson(path) {
 }
 
 export function evaluatePlan(plan, policy) {
+  if (!plan || typeof plan !== "object" || Array.isArray(plan)) {
+    throw new Error("Plan must be an object.");
+  }
   if (!Array.isArray(plan.actions)) throw new Error("Plan must include an actions array.");
   if (!policy || typeof policy !== "object") throw new Error("Policy must be an object.");
   validateConnectorIdentity(plan, policy);
@@ -52,8 +55,25 @@ function validateConnectorIdentity(plan, policy) {
 
 function validatePlanCollections(plan) {
   plan.actions.forEach((action, index) => {
-    if (action?.fields !== undefined && !Array.isArray(action.fields)) {
+    if (!action || typeof action !== "object" || Array.isArray(action)) {
+      throw new Error(`Action ${index} must be an object.`);
+    }
+    for (const field of ["operation", "resource"]) {
+      if (typeof action[field] !== "string" || action[field].length === 0) {
+        throw new Error(`Action ${index} ${field} must be a non-empty string.`);
+      }
+    }
+    if (action.id !== undefined && (typeof action.id !== "string" || action.id.length === 0)) {
+      throw new Error(`Action ${index} id must be a non-empty string when supplied.`);
+    }
+    if (action.description !== undefined && typeof action.description !== "string") {
+      throw new Error(`Action ${index} description must be a string when supplied.`);
+    }
+    if (action.fields !== undefined && !Array.isArray(action.fields)) {
       throw new Error(`Action ${index} fields must be an array.`);
+    }
+    if (action.fields?.some((field) => typeof field !== "string")) {
+      throw new Error(`Action ${index} fields must contain only strings.`);
     }
   });
 }
@@ -147,10 +167,9 @@ export function renderJson(receipt) {
 }
 
 function evaluateAction(action, index, policy) {
-  if (!action || typeof action !== "object") throw new Error(`Action ${index} must be an object.`);
   const id = action.id || `action-${index + 1}`;
-  const operation = action.operation || "unknown";
-  const resource = action.resource || "unknown";
+  const operation = action.operation;
+  const resource = action.resource;
   const resourcePolicy = policy.resources?.[resource] || null;
   const blockers = blockedByPolicy(operation, resource, policy);
   const configuredApproval = resourcePolicy?.approval ?? policy.defaultApproval ?? "ask";

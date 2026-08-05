@@ -24,6 +24,39 @@ test("rejects plans without any actions", () => {
   );
 });
 
+test("rejects non-object plans with a stable domain error", () => {
+  for (const plan of [null, []]) {
+    assert.throws(
+      () => evaluatePlan(plan, { resources: {} }),
+      { message: "Plan must be an object." }
+    );
+  }
+});
+
+test("rejects primitive and array actions", () => {
+  for (const action of [null, "read contact", 42, []]) {
+    assert.throws(
+      () => evaluatePlan({ actions: [action] }, { resources: {} }),
+      { message: "Action 0 must be an object." }
+    );
+  }
+});
+
+test("rejects invalid action scalar fields", () => {
+  const policy = { resources: { contact: { operations: ["read"] } } };
+  for (const [action, message] of [
+    [{ operation: "", resource: "contact" }, "Action 0 operation must be a non-empty string."],
+    [{ operation: ["read"], resource: "contact" }, "Action 0 operation must be a non-empty string."],
+    [{ operation: "read", resource: "" }, "Action 0 resource must be a non-empty string."],
+    [{ operation: "read", resource: 42 }, "Action 0 resource must be a non-empty string."],
+    [{ id: [], operation: "read", resource: "contact" }, "Action 0 id must be a non-empty string when supplied."],
+    [{ id: "", operation: "read", resource: "contact" }, "Action 0 id must be a non-empty string when supplied."],
+    [{ description: {}, operation: "read", resource: "contact" }, "Action 0 description must be a string when supplied."]
+  ]) {
+    assert.throws(() => evaluatePlan({ actions: [action] }, policy), { message });
+  }
+});
+
 test("blocks unknown resources and disallowed operations", async () => {
   const policy = await loadJson("fixtures/policy.json");
   const receipt = evaluatePlan({
@@ -82,6 +115,17 @@ test("rejects malformed action fields instead of discarding them", () => {
     }),
     /Action 0 fields must be an array/
   );
+
+  for (const fields of [["email", null], ["email", 42], ["email", { name: "phone" }]]) {
+    assert.throws(
+      () => evaluatePlan({
+        actions: [{ id: "read-contact", operation: "read", resource: "contact", fields }]
+      }, {
+        resources: { contact: { operations: ["read"], sensitiveFields: ["email"] } }
+      }),
+      { message: "Action 0 fields must contain only strings." }
+    );
+  }
 });
 
 test("rejects mismatched plan and policy connectors", () => {

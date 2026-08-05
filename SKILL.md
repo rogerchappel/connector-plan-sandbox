@@ -5,8 +5,9 @@ read or write.
 
 ## Required Inputs
 
-- A local connector action plan JSON file whose `actions` array contains at
-  least one proposed action.
+- A local connector action plan JSON object whose `actions` array contains at
+  least one proposed action object with string `operation` and `resource`
+  values.
 - A local connector policy fixture JSON file.
 - Optional output path for the receipt.
 
