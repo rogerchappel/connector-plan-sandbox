@@ -5,6 +5,20 @@ import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
+const fixturePlan = "fixtures/action-plan.json";
+const fixturePolicy = "fixtures/policy.json";
+
+function runCli(...args) {
+  return spawnSync(process.execPath, ["src/cli.js", ...args], { encoding: "utf8" });
+}
+
+function assertOptionError(result, message) {
+  assert.equal(result.status, 1);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, `connector-plan-sandbox: ${message}\n`);
+  assert.doesNotMatch(result.stderr, /\n\s+at /);
+}
+
 test("help states that action plans cannot be empty", () => {
   const result = spawnSync(process.execPath, ["src/cli.js", "--help"], { encoding: "utf8" });
 
@@ -24,6 +38,48 @@ test("reports option errors without exposing an internal stack trace", () => {
   assert.equal(result.stdout, "");
   assert.equal(result.stderr, "connector-plan-sandbox: --policy requires a value.\n");
   assert.doesNotMatch(result.stderr, /\n\s+at /);
+});
+
+test("rejects duplicate value options", () => {
+  for (const [flag, value] of [
+    ["--policy", fixturePolicy],
+    ["--format", "json"],
+    ["--out", "receipt.md"]
+  ]) {
+    const result = runCli(
+      fixturePlan,
+      "--policy", fixturePolicy,
+      flag, value,
+      flag, value
+    );
+
+    assertOptionError(result, `${flag} may only be specified once.`);
+  }
+});
+
+test("rejects option tokens used as values", () => {
+  for (const flag of ["--policy", "--format", "--out"]) {
+    const result = runCli(fixturePlan, flag, "--format", "json");
+    assertOptionError(result, `${flag} requires a value.`);
+  }
+});
+
+test("rejects unknown options without producing a receipt", () => {
+  const result = runCli(fixturePlan, "--policy", fixturePolicy, "--verbose");
+  assertOptionError(result, "Unknown option: --verbose");
+});
+
+test("accepts value options in any order", () => {
+  const result = runCli(
+    fixturePlan,
+    "--format", "json",
+    "--out", "/dev/null",
+    "--policy", fixturePolicy
+  );
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
 });
 
 test("rejects an empty action plan without producing a receipt", () => {
