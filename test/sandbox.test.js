@@ -46,11 +46,14 @@ test("rejects invalid action scalar fields", () => {
   const policy = { resources: { contact: { operations: ["read"] } } };
   for (const [action, message] of [
     [{ operation: "", resource: "contact" }, "Action 0 operation must be a non-empty string."],
+    [{ operation: " \t", resource: "contact" }, "Action 0 operation must be a non-empty string."],
     [{ operation: ["read"], resource: "contact" }, "Action 0 operation must be a non-empty string."],
     [{ operation: "read", resource: "" }, "Action 0 resource must be a non-empty string."],
+    [{ operation: "read", resource: "\n " }, "Action 0 resource must be a non-empty string."],
     [{ operation: "read", resource: 42 }, "Action 0 resource must be a non-empty string."],
     [{ id: [], operation: "read", resource: "contact" }, "Action 0 id must be a non-empty string when supplied."],
     [{ id: "", operation: "read", resource: "contact" }, "Action 0 id must be a non-empty string when supplied."],
+    [{ id: "  ", operation: "read", resource: "contact" }, "Action 0 id must be a non-empty string when supplied."],
     [{ description: {}, operation: "read", resource: "contact" }, "Action 0 description must be a string when supplied."]
   ]) {
     assert.throws(() => evaluatePlan({ actions: [action] }, policy), { message });
@@ -141,6 +144,19 @@ test("rejects mismatched plan and policy connectors", () => {
   );
 });
 
+test("rejects blank or non-string connector identifiers", () => {
+  const action = { operation: "read", resource: "contact" };
+  const resources = { contact: { operations: ["read"] } };
+  for (const [plan, policy, message] of [
+    [{ connector: "  ", actions: [action] }, { resources }, "Plan connector must be a non-empty string when supplied."],
+    [{ connector: 42, actions: [action] }, { resources }, "Plan connector must be a non-empty string when supplied."],
+    [{ actions: [action] }, { connector: "\t", resources }, "Policy connector must be a non-empty string when supplied."],
+    [{ actions: [action] }, { connector: [], resources }, "Policy connector must be a non-empty string when supplied."]
+  ]) {
+    assert.throws(() => evaluatePlan(plan, policy), { message });
+  }
+});
+
 test("rejects malformed policy resources", () => {
   for (const resources of [null, [], "contact"]) {
     assert.throws(
@@ -158,6 +174,18 @@ test("rejects string policy operations instead of using substring matches", () =
       resources: { contact: { operations: "bread" } }
     }),
     /Policy operations for resource contact must be an array/
+  );
+});
+
+test("rejects blank policy resource and operation identifiers", () => {
+  const plan = { actions: [{ operation: "read", resource: "contact" }] };
+  assert.throws(
+    () => evaluatePlan(plan, { resources: { "  ": { operations: ["read"] } } }),
+    /Policy resource names must be non-empty strings/
+  );
+  assert.throws(
+    () => evaluatePlan(plan, { resources: { contact: { operations: ["read", " \t"] } } }),
+    /Policy operations for resource contact must contain only non-empty strings/
   );
 });
 
@@ -196,6 +224,8 @@ test("rejects malformed blocked rules with a domain error", () => {
 
   for (const [blocked, message] of [
     [[{ operation: "", resource: "contact" }], /Policy blocked rule 0 operation must be a non-empty string/],
+    [[{ operation: "  ", resource: "contact" }], /Policy blocked rule 0 operation must be a non-empty string/],
+    [[{ operation: "read", resource: "\n" }], /Policy blocked rule 0 resource must be a non-empty string/],
     [[{ operation: "read", resource: 42 }], /Policy blocked rule 0 resource must be a non-empty string/]
   ]) {
     assert.throws(
