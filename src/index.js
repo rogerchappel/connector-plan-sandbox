@@ -48,6 +48,11 @@ function validatePlanActions(plan) {
 }
 
 function validateConnectorIdentity(plan, policy) {
+  for (const [label, connector] of [["Plan", plan.connector], ["Policy", policy.connector]]) {
+    if (connector !== undefined && !isNonBlankString(connector)) {
+      throw new Error(`${label} connector must be a non-empty string when supplied.`);
+    }
+  }
   if (plan.connector && policy.connector && plan.connector !== policy.connector) {
     throw new Error(`Plan connector ${plan.connector} does not match policy connector ${policy.connector}.`);
   }
@@ -59,11 +64,11 @@ function validatePlanCollections(plan) {
       throw new Error(`Action ${index} must be an object.`);
     }
     for (const field of ["operation", "resource"]) {
-      if (typeof action[field] !== "string" || action[field].length === 0) {
+      if (!isNonBlankString(action[field])) {
         throw new Error(`Action ${index} ${field} must be a non-empty string.`);
       }
     }
-    if (action.id !== undefined && (typeof action.id !== "string" || action.id.length === 0)) {
+    if (action.id !== undefined && !isNonBlankString(action.id)) {
       throw new Error(`Action ${index} id must be a non-empty string when supplied.`);
     }
     if (action.description !== undefined && typeof action.description !== "string") {
@@ -88,11 +93,14 @@ function validatePolicyCollections(policy) {
   }
 
   for (const [resource, resourcePolicy] of Object.entries(policy.resources)) {
+    if (!isNonBlankString(resource)) {
+      throw new Error("Policy resource names must be non-empty strings.");
+    }
     if (!Array.isArray(resourcePolicy?.operations)) {
       throw new Error(`Policy operations for resource ${resource} must be an array.`);
     }
-    if (!resourcePolicy.operations.every((operation) => typeof operation === "string")) {
-      throw new Error(`Policy operations for resource ${resource} must contain only strings.`);
+    if (!resourcePolicy.operations.every(isNonBlankString)) {
+      throw new Error(`Policy operations for resource ${resource} must contain only non-empty strings.`);
     }
     if (resourcePolicy.sensitiveFields !== undefined && !Array.isArray(resourcePolicy.sensitiveFields)) {
       throw new Error(`Policy sensitiveFields for resource ${resource} must be an array.`);
@@ -107,11 +115,15 @@ function validatePolicyCollections(policy) {
       throw new Error(`Policy blocked rule ${index} must be an object.`);
     }
     for (const field of ["operation", "resource"]) {
-      if (typeof rule[field] !== "string" || rule[field].length === 0) {
+      if (!isNonBlankString(rule[field])) {
         throw new Error(`Policy blocked rule ${index} ${field} must be a non-empty string.`);
       }
     }
   }
+}
+
+function isNonBlankString(value) {
+  return typeof value === "string" && value.trim().length > 0;
 }
 
 function validatePolicyApprovals(policy) {
