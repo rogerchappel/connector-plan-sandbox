@@ -160,6 +160,8 @@ test("rejects malformed plan shapes without writing output", () => {
     [[], "Plan must be an object."],
     [{ actions: ["read contact"] }, "Action 0 must be an object."],
     [{ actions: [{ operation: 42, resource: "contact" }] }, "Action 0 operation must be a non-empty string."],
+    [{ actions: [{ id: " ", operation: "read", resource: "contact" }] }, "Action 0 id must be a non-empty string when supplied."],
+    [{ actions: [{ operation: "\t", resource: "contact" }] }, "Action 0 operation must be a non-empty string."],
     [{ actions: [{ operation: "read", resource: "contact", fields: [null] }] }, "Action 0 fields must contain only strings."]
   ]) {
     const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
@@ -186,4 +188,29 @@ test("rejects malformed plan shapes without writing output", () => {
     assert.doesNotMatch(result.stderr, /\n\s+at /);
     assert.equal(existsSync(outputPath), false);
   }
+});
+
+test("rejects blank policy identifiers without writing output", () => {
+  const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
+  const planPath = join(directory, "plan.json");
+  const policyPath = join(directory, "policy.json");
+  const outputPath = join(directory, "receipt.json");
+  writeFileSync(planPath, JSON.stringify({
+    connector: "crm",
+    actions: [{ operation: "read", resource: "contact" }]
+  }));
+  writeFileSync(policyPath, JSON.stringify({
+    connector: "crm",
+    resources: { contact: { operations: ["  "] } }
+  }));
+
+  const result = runCli(
+    planPath,
+    "--policy", policyPath,
+    "--format", "json",
+    "--out", outputPath
+  );
+
+  assertOptionError(result, "Policy operations for resource contact must contain only non-empty strings.");
+  assert.equal(existsSync(outputPath), false);
 });

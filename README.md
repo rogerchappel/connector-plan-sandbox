@@ -30,13 +30,13 @@ node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format
 ```
 
 The plan must be a JSON object. `actions` must be an array containing at least
-one action, and every action must be an object with non-empty string
-`operation` and `resource` values. Optional `id` values must be non-empty
+one action, and every action must be an object with non-blank string
+`operation` and `resource` values. Optional `id` values must be non-blank
 strings, optional `description` values must be strings, and optional `fields`
 values must be arrays containing only strings. Omit `fields` when the action has
-no fields. When both the plan and policy declare a non-empty `connector`, the
-values must match so that a policy cannot authorize a plan intended for another
-connector.
+no fields. Supplied plan and policy `connector` identifiers must be non-blank
+strings. When both declare a connector, the values must match so that a policy
+cannot authorize a plan intended for another connector.
 
 ## Policy Shape
 
@@ -46,13 +46,14 @@ needed before execution. The `blocked` mode is a deny policy: whether set on a
 resource or inherited from `defaultApproval`, it adds a blocker to each affected
 action and makes the top-level receipt report `"blocked": true`.
 
-`resources` is required and must be an object keyed by resource name. Each
-resource must declare `operations` as an array of exact string operation names.
+`resources` is required and must be an object keyed by non-blank resource name.
+Each resource must declare `operations` as an array of exact, non-blank string
+operation names.
 Its optional `sensitiveFields` value must be an array of exact field-name
 strings; substring matching is never used.
 
 The optional top-level `blocked` collection must be an array of rule objects.
-Every rule requires non-empty string `operation` and `resource` fields; either
+Every rule requires non-blank string `operation` and `resource` fields; either
 field may be `"*"` to match all values. Other shapes, including strings that
 merely contain an operation or field name, are rejected before a receipt is
 evaluated.

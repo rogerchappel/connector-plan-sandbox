@@ -6,9 +6,12 @@ read or write.
 ## Required Inputs
 
 - A local connector action plan JSON object whose `actions` array contains at
-  least one proposed action object with string `operation` and `resource`
-  values.
+  least one proposed action object with non-blank string `operation` and
+  `resource` values. Optional action `id` and plan `connector` identifiers must
+  also be non-blank strings when supplied.
 - A local connector policy fixture JSON file.
+  Resource names and operation entries must be non-blank strings, as must an
+  optional policy `connector` identifier.
 - Optional output path for the receipt.
 
 ## Side-Effect Boundaries
