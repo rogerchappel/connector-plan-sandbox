@@ -59,6 +59,11 @@ function validateConnectorIdentity(plan, policy) {
 }
 
 function validatePlanCollections(plan) {
+  if (plan.requestId !== undefined && !isNonBlankString(plan.requestId)) {
+    throw new Error("Plan requestId must be a non-empty string when supplied.");
+  }
+
+  const actionIdIndexes = new Map();
   plan.actions.forEach((action, index) => {
     if (!action || typeof action !== "object" || Array.isArray(action)) {
       throw new Error(`Action ${index} must be an object.`);
@@ -70,6 +75,13 @@ function validatePlanCollections(plan) {
     }
     if (action.id !== undefined && !isNonBlankString(action.id)) {
       throw new Error(`Action ${index} id must be a non-empty string when supplied.`);
+    }
+    if (action.id !== undefined) {
+      const firstIndex = actionIdIndexes.get(action.id);
+      if (firstIndex !== undefined) {
+        throw new Error(`Action ${index} id duplicates action ${firstIndex} id: ${action.id}.`);
+      }
+      actionIdIndexes.set(action.id, index);
     }
     if (action.description !== undefined && typeof action.description !== "string") {
       throw new Error(`Action ${index} description must be a string when supplied.`);
