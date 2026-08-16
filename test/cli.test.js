@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdtempSync, writeFileSync } from "node:fs";
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -213,4 +213,61 @@ test("rejects blank policy identifiers without writing output", () => {
 
   assertOptionError(result, "Policy operations for resource contact must contain only non-empty strings.");
   assert.equal(existsSync(outputPath), false);
+});
+
+test("rejects invalid receipt identities without writing output", () => {
+  const policy = { resources: { contact: { operations: ["read", "write"] } } };
+  for (const [plan, message] of [
+    [{ requestId: { invalid: true }, actions: [{ operation: "read", resource: "contact" }] },
+      "Plan requestId must be a non-empty string when supplied."],
+    [{ actions: [
+      { id: "same", operation: "read", resource: "contact" },
+      { id: "same", operation: "write", resource: "contact" }
+    ] }, "Action 1 id duplicates action 0 id: same."]
+  ]) {
+    const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
+    const planPath = join(directory, "plan.json");
+    const policyPath = join(directory, "policy.json");
+    const outputPath = join(directory, "receipt.json");
+    writeFileSync(planPath, JSON.stringify(plan));
+    writeFileSync(policyPath, JSON.stringify(policy));
+
+    const result = runCli(
+      planPath,
+      "--policy", policyPath,
+      "--format", "json",
+      "--out", outputPath
+    );
+
+    assertOptionError(result, message);
+    assert.equal(existsSync(outputPath), false);
+  }
+});
+
+test("writes generated receipt identities when identifiers are omitted", () => {
+  const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
+  const planPath = join(directory, "plan.json");
+  const policyPath = join(directory, "policy.json");
+  const outputPath = join(directory, "receipt.json");
+  writeFileSync(planPath, JSON.stringify({
+    actions: [{ operation: "read", resource: "contact" }]
+  }));
+  writeFileSync(policyPath, JSON.stringify({
+    resources: { contact: { operations: ["read"] } }
+  }));
+
+  const result = runCli(
+    planPath,
+    "--policy", policyPath,
+    "--format", "json",
+    "--out", outputPath
+  );
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stdout, "");
+  assert.equal(result.stderr, "");
+  assert.equal(existsSync(outputPath), true);
+  const receipt = JSON.parse(readFileSync(outputPath, "utf8"));
+  assert.equal(receipt.requestId, "unknown-request");
+  assert.equal(receipt.actions[0].id, "action-1");
 });
