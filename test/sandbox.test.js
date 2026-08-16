@@ -60,6 +60,46 @@ test("rejects invalid action scalar fields", () => {
   }
 });
 
+test("rejects blank or non-string request identifiers", () => {
+  const policy = { resources: { contact: { operations: ["read"] } } };
+  const action = { operation: "read", resource: "contact" };
+
+  for (const requestId of ["", " \t", 42, {}]) {
+    assert.throws(
+      () => evaluatePlan({ requestId, actions: [action] }, policy),
+      { message: "Plan requestId must be a non-empty string when supplied." }
+    );
+  }
+});
+
+test("rejects duplicate supplied action identifiers", () => {
+  assert.throws(
+    () => evaluatePlan({
+      actions: [
+        { id: "same", operation: "read", resource: "contact" },
+        { id: "same", operation: "write", resource: "contact" }
+      ]
+    }, {
+      resources: { contact: { operations: ["read", "write"] } }
+    }),
+    { message: "Action 1 id duplicates action 0 id: same." }
+  );
+});
+
+test("generates receipt identities when identifiers are omitted", () => {
+  const receipt = evaluatePlan({
+    actions: [
+      { operation: "read", resource: "contact" },
+      { operation: "write", resource: "contact" }
+    ]
+  }, {
+    resources: { contact: { operations: ["read", "write"] } }
+  });
+
+  assert.equal(receipt.requestId, "unknown-request");
+  assert.deepEqual(receipt.actions.map((action) => action.id), ["action-1", "action-2"]);
+});
+
 test("blocks unknown resources and disallowed operations", async () => {
   const policy = await loadJson("fixtures/policy.json");
   const receipt = evaluatePlan({
