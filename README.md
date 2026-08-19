@@ -87,3 +87,17 @@ receipt is printed or written when validation fails, including for an invalid
 
 The tool reads local files and writes only an explicit `--out` report. It does
 not hold tokens, open OAuth flows, call connector APIs, or make external writes.
+
+## Release verification
+
+Run the complete source and packed-artifact gate before release:
+
+```bash
+npm ci
+npm run release:check
+```
+
+The gate checks source syntax and tests, the build contract, and the CLI smoke.
+It then creates and extracts the npm tarball, verifies the shipped CLI, library,
+documentation, fixtures, license, and build scripts, and runs the build and CLI
+again from the extracted package.
