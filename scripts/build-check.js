@@ -2,6 +2,7 @@ import { access } from "node:fs/promises";
 
 const required = [
   "README.md",
+  "LICENSE",
   "SKILL.md",
   "docs/PRD.md",
   "docs/TASKS.md",
@@ -9,7 +10,8 @@ const required = [
   "src/index.js",
   "src/cli.js",
   "fixtures/action-plan.json",
-  "fixtures/policy.json"
+  "fixtures/policy.json",
+  "scripts/build-check.js"
 ];
 
 for (const path of required) {
@@ -17,4 +19,3 @@ for (const path of required) {
 }
 
 console.log(`build-check: ${required.length} required files present`);
-
