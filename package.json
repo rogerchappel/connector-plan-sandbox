@@ -13,6 +13,8 @@
     "src",
     "docs",
     "fixtures",
+    "scripts",
+    "LICENSE",
     "SKILL.md",
     "README.md"
   ],
@@ -20,7 +22,9 @@
     "test": "node --test",
     "check": "node --check src/*.js test/*.test.js",
     "build": "node scripts/build-check.js",
-    "smoke": "node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format markdown --out /tmp/connector-plan-sandbox-smoke.md"
+    "smoke": "node src/cli.js fixtures/action-plan.json --policy fixtures/policy.json --format markdown --out /tmp/connector-plan-sandbox-smoke.md",
+    "package:smoke": "node scripts/package-smoke.js",
+    "release:check": "npm run check && npm test && npm run build && npm run smoke && npm run package:smoke"
   },
   "keywords": [
     "agents",
