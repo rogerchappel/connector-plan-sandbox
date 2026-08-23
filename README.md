@@ -68,6 +68,8 @@ plan until they are resolved. The sandbox itself never executes the action plan.
 
 ## CLI
 
+Help is a standalone command: run `connector-plan-sandbox --help` without a plan or other options.
+
 ```bash
 connector-plan-sandbox plan.json --policy policy.json --format markdown --out receipt.md
 connector-plan-sandbox plan.json --policy policy.json --format json
