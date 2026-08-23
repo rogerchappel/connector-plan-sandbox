@@ -27,6 +27,25 @@ test("help states that action plans cannot be empty", () => {
   assert.equal(result.stderr, "");
 });
 
+test("requires help to be used as a standalone command without reading inputs or writing output", () => {
+  const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-help-"));
+  const outputPath = join(directory, "receipt.md");
+  const missingPlan = join(directory, "missing-plan.json");
+  const missingPolicy = join(directory, "missing-policy.json");
+
+  for (const args of [
+    ["--help", missingPlan],
+    [missingPlan, "--help"],
+    [missingPlan, "--policy", missingPolicy, "--help"],
+    [missingPlan, "--policy", missingPolicy, "--out", outputPath, "--help"],
+    ["--help", "--format", "json"]
+  ]) {
+    const result = runCli(...args);
+    assertOptionError(result, "--help must be used without other arguments.");
+    assert.equal(existsSync(outputPath), false);
+  }
+});
+
 test("reports option errors without exposing an internal stack trace", () => {
   const result = spawnSync(process.execPath, [
     "src/cli.js",
