@@ -4,7 +4,7 @@ import { evaluatePlan, loadJson, renderJson, renderMarkdown } from "./index.js";
 
 const args = process.argv.slice(2);
 
-if (args.includes("--help") || args.length === 0) {
+if ((args.length === 1 && args[0] === "--help") || args.length === 0) {
   console.log(`Usage: connector-plan-sandbox <plan.json> --policy policy.json [--format markdown|json] [--out path]
 
 Options may appear in any order after <plan.json> and may each be specified once.
@@ -15,6 +15,9 @@ The plan's actions array must contain at least one action.`);
 const planPath = args[0];
 
 try {
+  if (args.includes("--help")) {
+    throw new Error("--help must be used without other arguments.");
+  }
   const options = parseOptions(args.slice(1));
   const plan = await loadJson(planPath);
   const policy = await loadJson(options.policy);
