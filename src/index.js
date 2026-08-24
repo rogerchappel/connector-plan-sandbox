@@ -63,7 +63,7 @@ function validatePlanCollections(plan) {
     throw new Error("Plan requestId must be a non-empty string when supplied.");
   }
 
-  const actionIdIndexes = new Map();
+  const actionIds = new Map();
   plan.actions.forEach((action, index) => {
     if (!action || typeof action !== "object" || Array.isArray(action)) {
       throw new Error(`Action ${index} must be an object.`);
@@ -76,13 +76,14 @@ function validatePlanCollections(plan) {
     if (action.id !== undefined && !isNonBlankString(action.id)) {
       throw new Error(`Action ${index} id must be a non-empty string when supplied.`);
     }
-    if (action.id !== undefined) {
-      const firstIndex = actionIdIndexes.get(action.id);
-      if (firstIndex !== undefined) {
-        throw new Error(`Action ${index} id duplicates action ${firstIndex} id: ${action.id}.`);
-      }
-      actionIdIndexes.set(action.id, index);
+    const id = action.id ?? `action-${index + 1}`;
+    const first = actionIds.get(id);
+    if (first !== undefined) {
+      const currentLabel = action.id === undefined ? "generated id" : "id";
+      const firstLabel = first.generated ? "generated id" : "id";
+      throw new Error(`Action ${index} ${currentLabel} duplicates action ${first.index} ${firstLabel}: ${id}.`);
     }
+    actionIds.set(id, { index, generated: action.id === undefined });
     if (action.description !== undefined && typeof action.description !== "string") {
       throw new Error(`Action ${index} description must be a string when supplied.`);
     }
