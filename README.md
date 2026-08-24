@@ -35,12 +35,15 @@ one action, and every action must be an object with non-blank string
 `operation` and `resource` values. An optional `requestId` must be a non-blank
 string; when omitted, the receipt uses `unknown-request`. Optional action `id`
 values must be non-blank strings and unique within the plan. Actions without an
-`id` receive positional identifiers such as `action-1`. Optional `description`
-values must be strings, and optional `fields` values must be arrays containing
-only strings. Omit `fields` when the action has no fields. Supplied plan and
-policy `connector` identifiers must be non-blank strings. When both declare a
-connector, the values must match so that a policy cannot authorize a plan
-intended for another connector.
+`id` receive positional identifiers such as `action-1`. The final identifiers
+must also be unique when supplied and generated IDs are considered together;
+for example, an explicit `action-2` conflicts with the generated ID of an
+unidentified second action, and the plan is rejected before a receipt is
+emitted. Optional `description` values must be strings, and optional `fields`
+values must be arrays containing only strings. Omit `fields` when the action has
+no fields. Supplied plan and policy `connector` identifiers must be non-blank
+strings. When both declare a connector, the values must match so that a policy
+cannot authorize a plan intended for another connector.
 
 ## Policy Shape
 
@@ -83,7 +86,8 @@ followed by a value rather than another option. `--policy` is required;
 Invalid or incomplete options and malformed plan shapes exit with status 1 and
 a concise domain error, without printing an implementation stack trace. No
 receipt is printed or written when validation fails, including for an invalid
-`requestId`, duplicate supplied action IDs, or an empty `actions` array.
+`requestId`, duplicate supplied or generated action IDs, or an empty `actions`
+array.
 
 ## Safety
 
