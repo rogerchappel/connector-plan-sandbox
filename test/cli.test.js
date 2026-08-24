@@ -242,7 +242,11 @@ test("rejects invalid receipt identities without writing output", () => {
     [{ actions: [
       { id: "same", operation: "read", resource: "contact" },
       { id: "same", operation: "write", resource: "contact" }
-    ] }, "Action 1 id duplicates action 0 id: same."]
+    ] }, "Action 1 id duplicates action 0 id: same."],
+    [{ actions: [
+      { id: "action-2", operation: "read", resource: "contact" },
+      { operation: "write", resource: "contact" }
+    ] }, "Action 1 generated id duplicates action 0 id: action-2."]
   ]) {
     const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
     const planPath = join(directory, "plan.json");

@@ -100,6 +100,28 @@ test("generates receipt identities when identifiers are omitted", () => {
   assert.deepEqual(receipt.actions.map((action) => action.id), ["action-1", "action-2"]);
 });
 
+test("rejects collisions between supplied and generated action identifiers", () => {
+  const policy = { resources: { contact: { operations: ["read"] } } };
+
+  for (const [actions, message] of [
+    [[
+      { id: "action-2", operation: "read", resource: "contact" },
+      { operation: "read", resource: "contact" }
+    ], "Action 1 generated id duplicates action 0 id: action-2."],
+    [[
+      { operation: "read", resource: "contact" },
+      { id: "action-1", operation: "read", resource: "contact" }
+    ], "Action 1 id duplicates action 0 generated id: action-1."],
+    [[
+      { id: "action-3", operation: "read", resource: "contact" },
+      { id: "custom", operation: "read", resource: "contact" },
+      { operation: "read", resource: "contact" }
+    ], "Action 2 generated id duplicates action 0 id: action-3."]
+  ]) {
+    assert.throws(() => evaluatePlan({ actions }, policy), { message });
+  }
+});
+
 test("blocks unknown resources and disallowed operations", async () => {
   const policy = await loadJson("fixtures/policy.json");
   const receipt = evaluatePlan({
