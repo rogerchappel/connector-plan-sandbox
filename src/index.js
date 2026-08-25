@@ -242,7 +242,12 @@ function highestApproval(values) {
 
 function buildSummary(actions, blockers, approval) {
   if (blockers.length) return `${blockers.length} blocker(s) must be resolved before any live connector use.`;
-  const writes = actions.filter((action) => action.operation === "write").length;
-  const reads = actions.filter((action) => action.operation === "read").length;
-  return `${reads} read action(s), ${writes} write action(s), approval mode ${approval}.`;
+  const operationCounts = new Map();
+  for (const action of actions) {
+    operationCounts.set(action.operation, (operationCounts.get(action.operation) || 0) + 1);
+  }
+  const counts = [...operationCounts]
+    .map(([operation, count]) => `${count} ${operation} action(s)`)
+    .join(", ");
+  return `${counts}, approval mode ${approval}.`;
 }

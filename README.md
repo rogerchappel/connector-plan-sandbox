@@ -1,7 +1,7 @@
 # connector-plan-sandbox
 
 `connector-plan-sandbox` rehearses connector action plans against local policy
-fixtures. It emits a dry-run receipt that explains reads, writes, sensitive
+fixtures. It emits a dry-run receipt that explains planned operations, sensitive
 fields, required approvals, and blockers before an agent touches a live account.
 
 ## Quickstart
@@ -58,6 +58,12 @@ Each resource must declare `operations` as an array of exact, non-blank string
 operation names.
 Its optional `sensitiveFields` value must be an array of exact field-name
 strings; substring matching is never used.
+
+For an allowed plan, the receipt summary counts every action under its exact
+operation name, including policy-defined names such as `delete`, and lists
+operation groups in their first-seen order. Read and write plans retain the same
+`N read action(s), N write action(s)` form; other operation names are not folded
+into either count or omitted.
 
 The optional top-level `blocked` collection must be an array of rule objects.
 Every rule requires non-blank string `operation` and `resource` fields; either

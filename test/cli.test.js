@@ -101,6 +101,26 @@ test("accepts value options in any order", () => {
   assert.equal(result.stderr, "");
 });
 
+test("prints allowed delete actions in the markdown summary", () => {
+  const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-delete-"));
+  const planPath = join(directory, "plan.json");
+  const policyPath = join(directory, "policy.json");
+  writeFileSync(planPath, JSON.stringify({
+    actions: [{ operation: "delete", resource: "contact" }]
+  }));
+  writeFileSync(policyPath, JSON.stringify({
+    resources: { contact: { operations: ["delete"], approval: "none" } }
+  }));
+
+  const result = runCli(planPath, "--policy", policyPath, "--format", "markdown");
+
+  assert.equal(result.status, 0);
+  assert.match(result.stdout, /Actions: 1/);
+  assert.match(result.stdout, /1 delete action\(s\), approval mode none\./);
+  assert.doesNotMatch(result.stdout, /0 read action/);
+  assert.equal(result.stderr, "");
+});
+
 test("rejects an empty action plan without producing a receipt", () => {
   const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
   const planPath = join(directory, "plan.json");

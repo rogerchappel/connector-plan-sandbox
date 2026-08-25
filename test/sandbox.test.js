@@ -14,6 +14,18 @@ test("evaluates fixture plan against policy", async () => {
   assert.equal(receipt.blocked, false);
 });
 
+test("summarizes every allowed operation name", () => {
+  const receipt = evaluatePlan({
+    actions: [{ operation: "delete", resource: "contact" }]
+  }, {
+    resources: { contact: { operations: ["delete"], approval: "none" } }
+  });
+
+  assert.equal(receipt.actionCount, 1);
+  assert.equal(receipt.summary, "1 delete action(s), approval mode none.");
+  assert.match(renderMarkdown(receipt), /## Summary\n\n1 delete action\(s\), approval mode none\./);
+});
+
 test("rejects plans without any actions", () => {
   assert.throws(
     () => evaluatePlan({ connector: "crm", actions: [] }, {
