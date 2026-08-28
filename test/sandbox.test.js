@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { evaluatePlan, loadJson, renderMarkdown } from "../src/index.js";
+import { evaluatePlan, loadJson, renderJson, renderMarkdown } from "../src/index.js";
 
 test("evaluates fixture plan against policy", async () => {
   const plan = await loadJson("fixtures/action-plan.json");
@@ -307,6 +307,38 @@ test("rejects malformed blocked rules with a domain error", () => {
       message
     );
   }
+});
+
+test("rejects malformed blocked rule reasons", () => {
+  for (const reason of [null, false, 0, {}, [], "", " \t\n"]) {
+    assert.throws(
+      () => evaluatePlan({ actions: [{ operation: "read", resource: "contact" }] }, {
+        resources: { contact: { operations: ["read"] } },
+        blocked: [{ operation: "read", resource: "contact", reason }]
+      }),
+      /Policy blocked rule 0 reason must be a non-empty string when supplied/
+    );
+  }
+});
+
+test("preserves default and custom blocked rule reasons across receipt formats", () => {
+  const plan = { actions: [{ operation: "read", resource: "contact" }] };
+  const resources = { contact: { operations: ["read"] } };
+
+  const defaultReceipt = evaluatePlan(plan, {
+    resources,
+    blocked: [{ operation: "read", resource: "contact" }]
+  });
+  assert.equal(defaultReceipt.blockers[0].reason, "Blocked by policy fixture.");
+
+  const customReason = "Reading contacts requires a reviewed exception.";
+  const customReceipt = evaluatePlan(plan, {
+    resources,
+    blocked: [{ operation: "read", resource: "contact", reason: customReason }]
+  });
+  assert.equal(customReceipt.blockers[0].reason, customReason);
+  assert.match(renderMarkdown(customReceipt), new RegExp(customReason.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")));
+  assert.equal(JSON.parse(renderJson(customReceipt)).blockers[0].reason, customReason);
 });
 
 test("blocks actions when a resource approval policy is blocked", () => {
