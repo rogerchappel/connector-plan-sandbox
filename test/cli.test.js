@@ -192,6 +192,30 @@ test("reports malformed blocked rules as concise domain errors", () => {
   assert.doesNotMatch(result.stderr, /\n\s+at /);
 });
 
+test("rejects malformed blocked rule reasons without producing a receipt", () => {
+  for (const [reason, label] of [[{ unexpected: true }, "object"], ["  ", "blank"]]) {
+    const directory = mkdtempSync(join(tmpdir(), `connector-plan-sandbox-reason-${label}-`));
+    const planPath = join(directory, "plan.json");
+    const policyPath = join(directory, "policy.json");
+    const outputPath = join(directory, "receipt.json");
+    writeFileSync(planPath, JSON.stringify({ actions: [{ operation: "read", resource: "contact" }] }));
+    writeFileSync(policyPath, JSON.stringify({
+      resources: { contact: { operations: ["read"] } },
+      blocked: [{ operation: "read", resource: "contact", reason }]
+    }));
+
+    const result = runCli(
+      planPath,
+      "--policy", policyPath,
+      "--format", "json",
+      "--out", outputPath
+    );
+
+    assertOptionError(result, "Policy blocked rule 0 reason must be a non-empty string when supplied.");
+    assert.equal(existsSync(outputPath), false);
+  }
+});
+
 test("rejects malformed plan shapes without writing output", () => {
   const policy = { resources: { contact: { operations: ["read"] } } };
   for (const [plan, message] of [
