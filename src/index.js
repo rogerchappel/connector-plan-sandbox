@@ -132,6 +132,9 @@ function validatePolicyCollections(policy) {
         throw new Error(`Policy blocked rule ${index} ${field} must be a non-empty string.`);
       }
     }
+    if (rule.reason !== undefined && !isNonBlankString(rule.reason)) {
+      throw new Error(`Policy blocked rule ${index} reason must be a non-empty string when supplied.`);
+    }
   }
 }
 
