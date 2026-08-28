@@ -67,9 +67,11 @@ into either count or omitted.
 
 The optional top-level `blocked` collection must be an array of rule objects.
 Every rule requires non-blank string `operation` and `resource` fields; either
-field may be `"*"` to match all values. Other shapes, including strings that
-merely contain an operation or field name, are rejected before a receipt is
-evaluated.
+field may be `"*"` to match all values. A rule may also provide a non-blank
+string `reason`, which is preserved verbatim in Markdown and JSON receipts; an
+omitted reason defaults to `Blocked by policy fixture.`. Other shapes, including
+blank or non-string reasons and strings that merely contain an operation or
+field name, are rejected before a receipt is evaluated.
 
 A plan containing both permitted and policy-blocked actions is blocked as a
 whole. Review the receipt's per-action blockers; do not execute any part of the
