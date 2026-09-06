@@ -401,6 +401,17 @@ test("renders markdown receipt", async () => {
   const markdown = renderMarkdown(receipt);
 
   assert.match(markdown, /Connector Dry-Run Receipt/);
-  assert.match(markdown, /lookup-contact/);
+  assert.match(markdown, /- lookup-contact: read contact - ask\n  Description: Find the contact record/);
+  assert.match(markdown, /- create-note: write contact\.note - explicit\n  Description: Draft a follow-up note/);
   assert.match(markdown, /Sensitive fields: email/);
+});
+
+test("preserves the compact markdown layout for actions without descriptions", () => {
+  const receipt = evaluatePlan({
+    actions: [{ id: "read-contact", operation: "read", resource: "contact" }]
+  }, {
+    resources: { contact: { operations: ["read"], approval: "none" } }
+  });
+
+  assert.match(renderMarkdown(receipt), /- read-contact: read contact - none\n\n## Summary/);
 });
