@@ -45,6 +45,11 @@ no fields. Supplied plan and policy `connector` identifiers must be non-blank
 strings. When both declare a connector, the values must match so that a policy
 cannot authorize a plan intended for another connector.
 
+Markdown receipts render each non-empty description directly below its action,
+for example `Description: Draft a follow-up note`, so the explanation remains
+associated with the operation it describes. Actions without descriptions keep
+the compact one-line layout. JSON receipts retain the existing action shape.
+
 ## Policy Shape
 
 Policies define allowed resources, sensitive fields, approval modes, and blocked
