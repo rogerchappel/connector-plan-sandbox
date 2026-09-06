@@ -174,6 +174,7 @@ export function renderMarkdown(receipt) {
   lines.push("## Actions", "");
   for (const action of receipt.actions) {
     lines.push(`- ${action.id}: ${action.operation} ${action.resource} - ${action.approval}`);
+    if (action.description) lines.push(`  Description: ${action.description}`);
     if (action.sensitiveFields.length) lines.push(`  Sensitive fields: ${action.sensitiveFields.join(", ")}`);
     for (const blocker of action.blockers) lines.push(`  Blocker: ${blocker.reason}`);
   }
