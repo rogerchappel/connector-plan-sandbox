@@ -48,7 +48,11 @@ cannot authorize a plan intended for another connector.
 Markdown receipts render each non-empty description directly below its action,
 for example `Description: Draft a follow-up note`, so the explanation remains
 associated with the operation it describes. Actions without descriptions keep
-the compact one-line layout. JSON receipts retain the existing action shape.
+the compact one-line layout. Embedded CR, LF, and CRLF characters in any
+caller-controlled value are replaced with spaces in Markdown so request
+metadata, action details, sensitive fields, summaries, and blockers stay on
+their intended lines. JSON receipts retain the original values and action
+shape.
 
 ## Policy Shape
 
@@ -73,8 +77,9 @@ into either count or omitted.
 The optional top-level `blocked` collection must be an array of rule objects.
 Every rule requires non-blank string `operation` and `resource` fields; either
 field may be `"*"` to match all values. A rule may also provide a non-blank
-string `reason`, which is preserved verbatim in Markdown and JSON receipts; an
-omitted reason defaults to `Blocked by policy fixture.`. Other shapes, including
+string `reason`, which is preserved in JSON receipts and rendered with line
+breaks normalized in Markdown; an omitted reason defaults to
+`Blocked by policy fixture.`. Other shapes, including
 blank or non-string reasons and strings that merely contain an operation or
 field name, are rejected before a receipt is evaluated.
 
