@@ -162,33 +162,37 @@ function validateApproval(approval, label) {
 
 export function renderMarkdown(receipt) {
   const lines = [
-    `# Connector Dry-Run Receipt: ${receipt.requestId}`,
+    `# Connector Dry-Run Receipt: ${markdownLineValue(receipt.requestId)}`,
     "",
-    `Connector: ${receipt.connector}`,
-    `Actions: ${receipt.actionCount}`,
-    `Approval: ${receipt.approval}`,
+    `Connector: ${markdownLineValue(receipt.connector)}`,
+    `Actions: ${markdownLineValue(receipt.actionCount)}`,
+    `Approval: ${markdownLineValue(receipt.approval)}`,
     `Blocked: ${receipt.blocked ? "yes" : "no"}`,
     ""
   ];
 
   lines.push("## Actions", "");
   for (const action of receipt.actions) {
-    lines.push(`- ${action.id}: ${action.operation} ${action.resource} - ${action.approval}`);
-    if (action.description) lines.push(`  Description: ${action.description}`);
-    if (action.sensitiveFields.length) lines.push(`  Sensitive fields: ${action.sensitiveFields.join(", ")}`);
-    for (const blocker of action.blockers) lines.push(`  Blocker: ${blocker.reason}`);
+    lines.push(`- ${markdownLineValue(action.id)}: ${markdownLineValue(action.operation)} ${markdownLineValue(action.resource)} - ${markdownLineValue(action.approval)}`);
+    if (action.description) lines.push(`  Description: ${markdownLineValue(action.description)}`);
+    if (action.sensitiveFields.length) lines.push(`  Sensitive fields: ${action.sensitiveFields.map(markdownLineValue).join(", ")}`);
+    for (const blocker of action.blockers) lines.push(`  Blocker: ${markdownLineValue(blocker.reason)}`);
   }
   if (!receipt.actions.length) lines.push("- None recorded.");
   lines.push("");
 
-  lines.push("## Summary", "", receipt.summary, "");
+  lines.push("## Summary", "", markdownLineValue(receipt.summary), "");
   if (receipt.blockers.length) {
     lines.push("## Blockers", "");
-    for (const blocker of receipt.blockers) lines.push(`- ${blocker.actionId}: ${blocker.reason}`);
+    for (const blocker of receipt.blockers) lines.push(`- ${markdownLineValue(blocker.actionId)}: ${markdownLineValue(blocker.reason)}`);
     lines.push("");
   }
 
   return `${lines.join("\n")}\n`;
+}
+
+function markdownLineValue(value) {
+  return String(value).replace(/\r\n|\r|\n/g, " ");
 }
 
 export function renderJson(receipt) {
