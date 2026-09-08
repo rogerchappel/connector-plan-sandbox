@@ -415,3 +415,40 @@ test("preserves the compact markdown layout for actions without descriptions", (
 
   assert.match(renderMarkdown(receipt), /- read-contact: read contact - none\n\n## Summary/);
 });
+
+test("keeps multiline caller values within their markdown receipt lines", () => {
+  const receipt = evaluatePlan({
+    connector: "crm\r\nwest",
+    requestId: "request\rone\ntwo",
+    actions: [{
+      id: "action\nfirst",
+      operation: "read\rsecond",
+      resource: "contact\r\nrecord",
+      description: "Find\nthis\rcontact\r\nnow",
+      fields: ["email\nprimary"]
+    }]
+  }, {
+    connector: "crm\r\nwest",
+    resources: {
+      "contact\r\nrecord": {
+        operations: ["read\rsecond"],
+        sensitiveFields: ["email\nprimary"]
+      }
+    },
+    blocked: [{
+      operation: "read\rsecond",
+      resource: "contact\r\nrecord",
+      reason: "Needs\nreview\rfrom\r\nowner"
+    }]
+  });
+
+  const markdown = renderMarkdown(receipt);
+  assert.doesNotMatch(markdown, /\r/);
+  assert.match(markdown, /^# Connector Dry-Run Receipt: request one two$/m);
+  assert.match(markdown, /^Connector: crm west$/m);
+  assert.match(markdown, /^- action first: read second contact record - blocked$/m);
+  assert.match(markdown, /^  Description: Find this contact now$/m);
+  assert.match(markdown, /^  Sensitive fields: email primary$/m);
+  assert.match(markdown, /^  Blocker: Needs review from owner$/m);
+  assert.match(markdown, /^- action first: Needs review from owner$/m);
+});

@@ -121,6 +121,49 @@ test("prints allowed delete actions in the markdown summary", () => {
   assert.equal(result.stderr, "");
 });
 
+test("prints multiline plan and policy values on their intended markdown lines", () => {
+  const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-multiline-"));
+  const planPath = join(directory, "plan.json");
+  const policyPath = join(directory, "policy.json");
+  writeFileSync(planPath, JSON.stringify({
+    connector: "crm\r\nwest",
+    requestId: "request\none",
+    actions: [{
+      id: "read\rcontact",
+      operation: "read\nrecord",
+      resource: "contact\r\nentry",
+      description: "First line\nSecond line",
+      fields: ["email\r\nprimary"]
+    }]
+  }));
+  writeFileSync(policyPath, JSON.stringify({
+    connector: "crm\r\nwest",
+    resources: {
+      "contact\r\nentry": {
+        operations: ["read\nrecord"],
+        sensitiveFields: ["email\r\nprimary"]
+      }
+    },
+    blocked: [{
+      operation: "read\nrecord",
+      resource: "contact\r\nentry",
+      reason: "Owner\rreview\nrequired"
+    }]
+  }));
+
+  const result = runCli(planPath, "--policy", policyPath, "--format", "markdown");
+
+  assert.equal(result.status, 0);
+  assert.equal(result.stderr, "");
+  assert.doesNotMatch(result.stdout, /\r/);
+  assert.match(result.stdout, /^# Connector Dry-Run Receipt: request one$/m);
+  assert.match(result.stdout, /^Connector: crm west$/m);
+  assert.match(result.stdout, /^- read contact: read record contact entry - blocked$/m);
+  assert.match(result.stdout, /^  Description: First line Second line$/m);
+  assert.match(result.stdout, /^  Sensitive fields: email primary$/m);
+  assert.match(result.stdout, /^  Blocker: Owner review required$/m);
+});
+
 test("rejects an empty action plan without producing a receipt", () => {
   const directory = mkdtempSync(join(tmpdir(), "connector-plan-sandbox-"));
   const planPath = join(directory, "plan.json");
